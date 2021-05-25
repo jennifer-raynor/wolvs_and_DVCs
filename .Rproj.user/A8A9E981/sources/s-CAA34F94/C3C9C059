@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1621958673518.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "C3C9C059",
+    "lastKnownWriteTime" : 1621958799,
+    "last_content_update" : 1621958800003,
+    "path" : "C:/Users/jlraynor/Google Drive/WolfDVC/Regressions/Programs/replication package/03e - create figures S2.R",
+    "project_path" : "03e - create figures S2.R",
+    "properties" : {
+        "cursorPosition" : "195,90",
+        "scrollLine" : "152",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

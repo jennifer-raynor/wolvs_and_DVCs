@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1621958642109.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "4BC4A584",
+    "lastKnownWriteTime" : 1621954361,
+    "last_content_update" : 1621954361,
+    "path" : "C:/Users/jlraynor/Google Drive/WolfDVC/Regressions/Programs/replication package/03a - prepare data for regressions.R",
+    "project_path" : "03a - prepare data for regressions.R",
+    "properties" : {
+        "cursorPosition" : "78,0",
+        "scrollLine" : "35"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

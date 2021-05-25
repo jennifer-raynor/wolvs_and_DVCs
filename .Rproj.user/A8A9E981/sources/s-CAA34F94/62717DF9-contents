@@ -1,0 +1,173 @@
+library(plm)
+library(lmtest)
+library(tidyverse)
+
+rm(list = ls())
+
+# ------------------------------------------------------------------------------
+# parameters
+# ------------------------------------------------------------------------------
+
+# read in source data directly from Dryad
+wolf_dvc.df <- read.csv("https://datadryad.org/stash/downloads/file_stream/678854")
+
+# ------------------------------------------------------------------------------
+# clean up data
+# ------------------------------------------------------------------------------
+
+# TODO: explain here what the data quality concern is
+# these are dropped due to data quality concerns
+# robustness checks evaluate the effect of keeping these observations in the data
+
+# identify all counties with structural breaks in DVCs
+drop_cty.v <- wolf_dvc.df %>%
+  group_by(cty_fp) %>%
+  summarize(breaks = sum(dvc_break, na.rm = T)) %>%
+  filter(breaks > 1) %>%
+  .[["cty_fp"]]
+
+# drop all counties with structural breaks in DVCs
+wolf_dvc.df <- wolf_dvc.df %>%
+  filter(!cty_fp %in% drop_cty.v)
+
+# convert to a panel data frame
+wolf_dvc.pdf <- pdata.frame(wolf_dvc.df, index = c("cty_fp", "year"))
+
+rm(wolf_dvc.df)
+
+# scale wolf population so the estimated coefficient is easier to interpret
+# save wolf as tens so coefficients look nicer
+wolf_dvc.pdf$wolf_pop_tens <- wolf_dvc.pdf$wolf_pop / 10
+
+str(wolf_dvc.pdf)
+
+# save lagged ln_deer_pop_prehunt because otherwise we lose observations for first year
+# (i.e. deer population go back further than other data)
+wolf_dvc.pdf$Lln_deer_pop_prehunt  <- plm::lag(wolf_dvc.pdf$ln_deer_pop_prehunt, 1, shift = "time")
+
+# ------------------------------------------------------------------------------
+# prepare data for triple differences regression
+# ------------------------------------------------------------------------------
+
+# reshape data so that the regression can appropriately incorporate interactions
+wolf_dvc_3d.pdf <- wolf_dvc.pdf %>%
+  pivot_longer(c("dvc_total", "non_dvc_total"), names_to = "vc_type", values_to = "vc_value") %>%
+  mutate(dvc_dum = ifelse(vc_type == "dvc_total", 1, 0)) %>%
+  select(-ln_dvc_total, -ln_non_dvc_total, -dvc_break, -dvc_share)
+
+rm(wolf_dvc.pdf)
+
+# calculate log of DVC
+# this is the preferred transformation for the dependent variable
+wolf_dvc_3d.pdf <- wolf_dvc_3d.pdf %>%
+  mutate(ln_vc_total = log(vc_value))
+
+# ------------------------------------------------------------------------------
+# create independent variable selection matrix
+# ------------------------------------------------------------------------------
+
+# use a selection matrix so we can run all regressions programmatically
+# this file defines what independent variables are included,
+# what years are included,
+# and what, if any, observations are dropped
+indep_vars.m <- as.matrix(read.csv("regressions/indep_vars_dvcs.csv"))
+
+# convert to logical
+# exclude model id because it is character format
+indep_vars_logic.m <- apply(indep_vars.m[ , 2:ncol(indep_vars.m)], 2, as.logical)
+
+# use model numbers as row names
+row.names(indep_vars_logic.m) <- indep_vars.m[ , "model_id"]
+
+rm(indep_vars.m)
+
+# rename the year by wolf variable to match actual variable names
+colnames(indep_vars_logic.m) <- gsub("year_by_wolf", "year * ever_wolves_88_10",
+                               colnames(indep_vars_logic.m))
+
+# ------------------------------------------------------------------------------
+# run regressions
+# ------------------------------------------------------------------------------
+
+# loop through all regressions in the matrix above
+reg_results.l <- map(1:nrow(indep_vars_logic.m), function(x){
+
+  # save selection vectors
+  logical.v <- indep_vars_logic.m[x, ]
+
+  logical_cov.v <- logical.v[c("wolf_dum", "wolf_pop_tens",
+                               "ln_precip_inch", "ln_temp_minfb32", "ln_temp_maxfg80",
+                               "Lln_deer_pop_prehunt",
+                               "year", "year * ever_wolves_88_10")]
+
+  # get data set
+  # just doing this so we can more easily point it to another data set, if desired
+  data.df <- wolf_dvc_3d.pdf
+
+  # all code below is flexible enough to handle any regression through 2016,
+  # even though only a few of these are presented in the paper
+
+  # subset to desired time period
+  if(logical.v["y88_10"]) {data.df <- data.df[data.df$year %in% 1988:2010, ]}
+  if(logical.v["y88_16"]) {data.df <- data.df[data.df$year %in% 1988:2016, ]}
+
+  # subset to desired counties - remove multi entry/exit
+  if(logical.v["excl_exit_ever"] & logical.v["y88_10"]) {data.df <- data.df[which(data.df$wolf_exit_cty_88_10 != 1), ]}
+  if(logical.v["excl_exit_ever"] & logical.v["y88_16"]) {data.df <- data.df[which(data.df$wolf_exit_cty != 1), ]}
+
+  # subset to desired counties - remove boundaries
+  if(logical.v["excl_boundary_ever"] & logical.v["y88_10"]) {data.df <- data.df[which(data.df$wolf_boundary_ever_88_10 != 1), ]}
+  if(logical.v["excl_boundary_ever"] & logical.v["y88_16"]) {data.df <- data.df[which(data.df$wolf_boundary_ever != 1), ]}
+
+  # put together the regression formula
+  reg_formula.v <- as.formula(paste("ln_vc_total", "~",
+                                    paste(c(names(logical_cov.v)[logical_cov.v],
+                                            paste(names(logical_cov.v)[logical_cov.v], "* dvc_dum"),
+                                            "dvc_dum", "cty_fp * dvc_dum"),
+                                          collapse="+")))
+  # run the regression
+  # all regressions include year effects, so we don't need to index on year specifically
+  reg <- plm(reg_formula.v,
+             data = data.df,
+             model = "within",
+             index = c("cty_fp"),
+             effect = "individual")
+
+  # grab some summary stats
+  r2 <- r.squared(reg)
+  n <- nobs(reg)
+
+  # calculate robust se's
+  reg_clust <- coeftest(reg, vcov=vcovHC(reg, type="sss", cluster="group"))
+
+  # grab coefs, summary stats, and se's for independent var's of interest
+  beta_se.df <- data.frame(reg_clust[str_detect(rownames(reg_clust), "wolf_dum:dvc|wolf_pop_tens:dvc|Lln_deer_pop_prehunt:dvc"), 1:2, drop = F],
+                           r2 = r2,
+                           n = n)
+
+  # add in model number so that we can easily subset by model later
+  beta_se.df$model_id <- row.names(indep_vars_logic.m)[x]
+
+  # add in indicator for which wolf variable each coefficient refers to; sometimes have both
+  beta_se.df$x_var <- rownames(beta_se.df)
+
+  return(beta_se.df)
+
+})
+
+# combine all regressions estimates into a dataframe
+reg_results.df <- do.call(bind_rows, reg_results.l)
+
+# combine coef estimates with logical table
+# we're only saving wolf & deer estimates, but want to know the full list of controls
+reg_results.df <- left_join(reg_results.df,
+                            cbind(data.frame(indep_vars_logic.m), model_id = row.names(indep_vars_logic.m)),
+                            by = "model_id")
+
+# clean up names
+names(reg_results.df) <- gsub("Estimate", "coef", names(reg_results.df))
+
+names(reg_results.df) <- gsub("Std..Error", "se", names(reg_results.df), fixed = T)
+
+# save results for use in figures
+saveRDS(reg_results.df, "regressions/03a_out - regression results.rds")
