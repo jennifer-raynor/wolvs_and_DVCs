@@ -64,16 +64,16 @@ plot_vars.df <- indices.df %>%
   select(-value, -value_index)
 
 # clean up names for plot facet titles
-names.lut <- c("wolf_km2_range" = "a. Wolf density",
-               "deer_km2_range" = "b. Deer density",
-               "dvc_total" = "c. Deer-vehicle collisions",
-               "non_dvc_total" = "d. Other vehicle collisions")
+names.lut <- c("wolf_km2_range" = "A. Wolf density",
+               "deer_km2_range" = "B. Deer density",
+               "dvc_total" = "C. Deer-vehicle collisions",
+               "non_dvc_total" = "D. Other vehicle collisions")
 
 plot_vars.df$facet_titles <- factor(names.lut[plot_vars.df$variable],
-                                    levels = c("a. Wolf density",
-                                               "c. Deer-vehicle collisions",
-                                               "b. Deer density",
-                                               "d. Other vehicle collisions"))
+                                    levels = c("A. Wolf density",
+                                               "C. Deer-vehicle collisions",
+                                               "B. Deer density",
+                                               "D. Other vehicle collisions"))
 
 # save data for later plotting
 fig2_data.l <- list(trends = plot_vars.df)
@@ -98,7 +98,7 @@ dvc_share_trend.df <- dvc_share_trend.df %>%
 
 # clean up facet title for plotting purposes
 dvc_share_trend.df$variable <- gsub("dvc_share",
-                                    "e. Deer-vehicle collisions (% of total)",
+                                    "E. Deer-vehicle collisions (% of total)",
                                     dvc_share_trend.df$variable)
 
 # save to running list of data
@@ -137,7 +137,7 @@ event_study_coefs.df <- data.frame(coeftest(reg, vcov=vcovHC(reg, type="sss", cl
   mutate(var_name = rownames(.)) %>%
   filter(str_detect(.[,"var_name"], "ytw")) %>%
   mutate(var_name = str_replace_all(.$var_name, "ytw_bins_relevel", ""),
-         y_var = "f. Deer-vehicle collisions (% of total)",
+         y_var = "F. Deer-vehicle collisions (% of total)",
          var_name = as.integer(as.character(var_name)))
 
 names(event_study_coefs.df) <- c("beta", "se", "years_to_wolves", "variable")
@@ -148,7 +148,7 @@ event_study_coefs.df <- rbind(event_study_coefs.df,
                               data.frame(beta = 0,
                                          se = 0,
                                          years_to_wolves = -1,
-                                         variable = c("f. Deer-vehicle collisions (% of total)"))) %>%
+                                         variable = c("F. Deer-vehicle collisions (% of total)"))) %>%
   arrange(years_to_wolves)
 
 # save to running list of data

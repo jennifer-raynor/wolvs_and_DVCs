@@ -24,7 +24,7 @@ theme <- theme_ipsum_rc(base_family = "sans",
         legend.background = element_rect(fill = 'transparent', color = NA))
 
 # input results from previous program
-plot2_data.df <- readRDS("02a_out - fig2_data.rds")
+plot2_data.df <- readRDS("figures/02a_out - fig2_data.rds")
 
 # ------------------------------------------------------------------------------
 # Plot Fig. 2A-D: Trends in key variables
@@ -49,11 +49,11 @@ plot_2ad.f <- function(plot_data, var_to_plot, x_label, y_label) {
 
 # plot each facet
 # again, plotting separately so we can add more facets in the next step
-p1 <- plot_2ad.f(plot2_data.df[["trends"]], "a. Wolf density", x_label = "Year", y_label = "Number") +
+p1 <- plot_2ad.f(plot2_data.df[["trends"]], "A. Wolf density", x_label = "Year", y_label = "Number") +
   theme(legend.position = c(0.3,0.93))
-p2 <- plot_2ad.f(plot2_data.df[["trends"]], "b. Deer density", x_label = "Year", y_label = "Index, 1981 = 100")
-p3 <- plot_2ad.f(plot2_data.df[["trends"]], "c. Deer-vehicle collisions", x_label = "Year", y_label = "Index, 1988 = 100")
-p4 <- plot_2ad.f(plot2_data.df[["trends"]], "d. Other vehicle collisions", x_label = "Year", y_label = "Index, 1988 = 100")
+p2 <- plot_2ad.f(plot2_data.df[["trends"]], "B. Deer density", x_label = "Year", y_label = "Index, 1981 = 100")
+p3 <- plot_2ad.f(plot2_data.df[["trends"]], "C. Deer-vehicle collisions", x_label = "Year", y_label = "Index, 1988 = 100")
+p4 <- plot_2ad.f(plot2_data.df[["trends"]], "D. Other vehicle collisions", x_label = "Year", y_label = "Index, 1988 = 100")
 
 # save plots in a running list to combine with later plots
 plots.l <- list(p1, p2, p3, p4)
@@ -115,3 +115,6 @@ combined_plot <- plot_grid(plotlist = plots.l, nrow = 2, byrow = F, align = "v")
 ggsave("figures/02b_out - fig2.pdf",
        height = 3.5, width = 7, units = "in", dpi = 900)
 
+
+ggsave("figures/02b_out - fig2.png",
+       height = 3.5, width = 7, units = "in", dpi = 900)

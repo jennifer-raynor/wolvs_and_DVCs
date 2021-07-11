@@ -88,7 +88,7 @@ nets.v <- str_subset(unique(reg.df$model_id), "net")
 behs.v <- str_subset(unique(reg.df$model_id), "beh")
 
 reg.df <- reg.df %>%
-  mutate(effect = ifelse(model_id %in% nets.v, "a. Net effect", "b. Behavioral effect"))
+  mutate(effect = ifelse(model_id %in% nets.v, "A. Net effect", "B. Behavioral effect"))
 
 # clean up model numbers
 models_used <- rbind(data.frame(model_id = c(setdiff(nets.v, transforms.v),
@@ -194,3 +194,5 @@ combined_plot <- plot_grid(plotlist = c(list(coef_plot), spec_plots),
                            rel_heights = c(0.7, 0.25, 0.2, 0.2, 0.2), ncol = 1, align = "v")
 
 ggsave("figures/03e_out - figS2.pdf", height = 3.5, width = 3.42, units = "in", dpi = 900)
+
+ggsave("figures/03e_out - figS2.png", height = 3.5, width = 3.42, units = "in", dpi = 900)

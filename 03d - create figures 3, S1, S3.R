@@ -88,7 +88,7 @@ nets.v <- str_subset(unique(reg.df$model_id), "net")
 behs.v <- str_subset(unique(reg.df$model_id), "beh")
 
 reg.df <- reg.df %>%
-  mutate(effect = ifelse(model_id %in% nets.v, "a. Net effect", "b. Behavioral effect"))
+  mutate(effect = ifelse(model_id %in% nets.v, "A. Net effect", "B. Behavioral effect"))
 
 # clean up model numbers
 models_used <- rbind(data.frame(model_id = c(setdiff(nets.v, transforms.v),
@@ -207,6 +207,8 @@ combined_plot <- plot_grid(plotlist = c(list(coef_plot), spec_plots),
 
 ggsave("figures/03d_out - fig3.pdf", height = 3.5, width = 3.42, units = "in", dpi = 900)
 
+ggsave("figures/03d_out - fig3.png", height = 3.5, width = 3.42, units = "in", dpi = 900)
+
 # figure S1
 spec_cols <- unique(deer_data$category)
 
@@ -227,6 +229,8 @@ combined_plot <- plot_grid(plotlist = c(list(coef_plot), spec_plots),
                            rel_heights = c(0.6, 0.25, 0.2, 0.2, 0.2), ncol = 1, align = "v")
 
 ggsave("figures/03d_out - figS1.pdf", height = 3.25, width = 2.35, units = "in", dpi = 900)
+
+ggsave("figures/03d_out - figS1.png", height = 3.25, width = 2.35, units = "in", dpi = 900)
 
 # figure S3
 spec_cols <- c("Coefficient plotted", "Covariates", "Year effects", "Time period")
@@ -264,3 +268,5 @@ combined_plot <- plot_grid(plotlist = c(list(coef_plot), spec_plots),
                            rel_heights = c(0.7, 0.2, 0.31, 0.1, 0.1), ncol = 1, align = "v")
 
 ggsave("figures/03d_out - figS3.pdf", height = 3.75, width = 3.42, units = "in", dpi = 900)
+
+ggsave("figures/03d_out - figS3.png", height = 3.75, width = 3.42, units = "in", dpi = 900)
